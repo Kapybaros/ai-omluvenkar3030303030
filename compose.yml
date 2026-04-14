@@ -10,8 +10,7 @@ services:
       POSTGRES_DB:       excuses      # Database name
       POSTGRES_USER:     student      # Username
       POSTGRES_PASSWORD: tajneheslo   # Password ("secret password" in Czech 😄)
-    volumes:
-      - postgres_data:/var/lib/postgresql/data   # Persist data between restarts
+
     networks:
       - excuse_net
     restart: unless-stopped
@@ -50,5 +49,3 @@ networks:
   excuse_net:
     driver: bridge
 
-volumes:
-  postgres_data:

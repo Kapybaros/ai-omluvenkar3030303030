@@ -50,6 +50,16 @@ def init_db():
         );
     """)
 
+    # Create history table to fulfill the DB writing requirement
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id SERIAL PRIMARY KEY,
+            original TEXT NOT NULL,
+            generated TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+
     # Only insert seed data if the table is empty
     cur.execute("SELECT COUNT(*) FROM templates;")
     if cur.fetchone()[0] == 0:
@@ -90,6 +100,19 @@ def get_templates():
     return jsonify(list(templates))
 
 
+@app.route("/history", methods=["GET"])
+def get_history():
+    """Return the last 10 generated excuses from the database."""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    # Get 10 most recent history entries
+    cur.execute("SELECT original, generated, TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') as time FROM history ORDER BY id DESC LIMIT 10;")
+    history = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(list(history))
+
+
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.get_json()
@@ -125,6 +148,15 @@ def generate():
         letter = ""
         if "choices" in resp_json and len(resp_json["choices"]) > 0:
             letter = resp_json["choices"][0].get("message", {}).get("content", "").strip()
+            
+        # Save to database to demonstrate writing!
+        if letter:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO history (original, generated) VALUES (%s, %s);", (casual_excuse, letter))
+            conn.commit()
+            cur.close()
+            conn.close()
             
         return jsonify({"letter": letter})
 

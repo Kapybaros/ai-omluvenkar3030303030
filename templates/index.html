@@ -250,6 +250,24 @@
       background: #d6e4f7;
       border: 1px solid #c0d0e0;
     }
+
+    #history-section {
+      margin-top: 2rem;
+      border-top: 2px dashed var(--rule);
+      padding-top: 1.5rem;
+    }
+
+    .history-item {
+      background: rgba(255, 255, 255, 0.5);
+      border-left: 3px solid var(--accent);
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .history-item strong {
+      color: var(--stamp);
+    }
   </style>
 </head>
 <body>
@@ -294,9 +312,14 @@
       <div id="output-section">
         <p class="output-label">Your formal excuse letter:</p>
         <div id="letter-output"></div>
-        <div class="stamp">✓ AI Approved</div>
+        <div class="stamp">✓ AI Approved & Saved to DB</div>
         <br/>
         <button class="copy-btn" onclick="copyLetter()">⎘ Copy letter</button>
+      </div>
+      
+      <div id="history-section">
+        <p class="output-label" style="font-size: 1.1rem; color: #556; cursor: pointer;" onclick="loadHistory()">▼ Zobrazit historii omluvenek (DB Test)</p>
+        <div id="history-content" style="display: none;"></div>
       </div>
 
     </div>
@@ -380,6 +403,41 @@
         btn.textContent = '✓ Copied!';
         setTimeout(() => btn.textContent = '⎘ Copy letter', 2000);
       });
+    }
+
+    async function loadHistory() {
+      const contentDiv = document.getElementById('history-content');
+      if (contentDiv.style.display === 'block') {
+        contentDiv.style.display = 'none';
+        return;
+      }
+      
+      contentDiv.innerHTML = 'Načítám historii z databáze...';
+      contentDiv.style.display = 'block';
+      
+      try {
+        const res = await fetch('/history');
+        const history = await res.json();
+        
+        if (history.length === 0) {
+          contentDiv.innerHTML = '<p>Zatím žádná historie.</p>';
+          return;
+        }
+        
+        let html = '';
+        history.forEach(item => {
+          html += `
+            <div class="history-item">
+              <div style="color: #888; font-size: 0.7rem; margin-bottom: 4px;">${item.time}</div>
+              <strong>Původní:</strong> ${item.original}<br/><br/>
+              <strong>Vygenerováno:</strong><br/> ${item.generated.replace(/\\n/g, '<br/>')}
+            </div>
+          `;
+        });
+        contentDiv.innerHTML = html;
+      } catch (e) {
+        contentDiv.innerHTML = '<p style="color: red;">Chyba načítání databáze.</p>';
+      }
     }
 
     document.getElementById('excuse-input').addEventListener('keydown', e => {

@@ -31,8 +31,11 @@ services:
     env_file:
       - .env
     environment:
-      # PostgreSQL connection details (must match the "db" service above)
-      - DB_HOST=db
+      # LLM Model setup for production
+      - OPENAI_API_KEY=sk-420B08-tK1FKX69UbVB3DA
+      - OPENAI_BASE_URL=https://kurim.ithope.eu/v1
+      - MODEL_NAME=gemma3:27b
+      # PostgreSQL connection details
       - DB_PORT=5432
       - DB_NAME=excuses
       - DB_USER=student

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Omluvenkář 📝</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --paper: #fffdf4;
+      --ink: #1a1a2e;
+      --rule: #c5d8f0;
+      --red-margin: #f28b82;
+      --accent: #e63946;
+      --stamp: #2d6a4f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #d6e4f7;
+      background-image:
+        radial-gradient(circle at 20% 50%, #b8d4f0 0%, transparent 60%),
+        radial-gradient(circle at 80% 20%, #cce0f5 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      font-family: 'DM Mono', monospace;
+    }
+
+    h1 {
+      font-family: 'Caveat', cursive;
+      font-size: 2.8rem;
+      color: var(--ink);
+      margin-bottom: 0.2rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 0.78rem;
+      color: #556;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .notebook {
+      background: var(--paper);
+      width: 100%;
+      max-width: 680px;
+      border-radius: 4px;
+      box-shadow:
+        4px 4px 0px #b0c8e8,
+        8px 8px 0px #a0b8d8,
+        0 20px 60px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .notebook::before {
+      content: '';
+      position: absolute;
+      left: 60px;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: var(--red-margin);
+      opacity: 0.6;
+    }
+
+    .notebook-body {
+      padding: 2rem 2rem 2rem 80px;
+      background-image: repeating-linear-gradient(
+        transparent, transparent 31px,
+        var(--rule) 31px, var(--rule) 32px
+      );
+      background-size: 100% 32px;
+      background-position: 0 8px;
+    }
+
+    label {
+      display: block;
+      font-family: 'Caveat', cursive;
+      font-size: 1.3rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Template dropdown ── */
+    .template-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .template-row label {
+      margin-bottom: 0;
+      white-space: nowrap;
+      font-size: 1.1rem;
+    }
+
+    select#template-select {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px dashed var(--red-margin);
+      outline: none;
+      font-family: 'Caveat', cursive;
+      font-size: 1.1rem;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 0.1rem 0.2rem;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    select#template-select option {
+      font-family: sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .select-arrow {
+      font-size: 0.8rem;
+      color: var(--red-margin);
+      pointer-events: none;
+      margin-left: -1.2rem;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: vertical;
+      font-family: 'Caveat', cursive;
+      font-size: 1.25rem;
+      color: var(--ink);
+      line-height: 2rem;
+      padding: 0;
+      caret-color: var(--accent);
+    }
+
+    textarea::placeholder { color: #aab; font-style: italic; }
+
+    .btn {
+      margin-top: 1.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      padding: 0.65rem 1.6rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: transform 0.1s, background 0.2s;
+    }
+    .btn:hover { background: var(--accent); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+
+    #output-section {
+      display: none;
+      margin-top: 2rem;
+      border-top: 2px dashed var(--rule);
+      padding-top: 1.5rem;
+    }
+
+    .output-label {
+      font-family: 'Caveat', cursive;
+      font-size: 1.3rem;
+      color: var(--stamp);
+      margin-bottom: 0.75rem;
+    }
+
+    #letter-output {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.88rem;
+      line-height: 2rem;
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    .stamp {
+      display: inline-block;
+      margin-top: 1.2rem;
+      border: 2px solid var(--stamp);
+      color: var(--stamp);
+      padding: 0.2rem 0.7rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transform: rotate(-3deg);
+      opacity: 0.7;
+    }
+
+    .copy-btn {
+      margin-top: 1rem;
+      background: transparent;
+      border: 1.5px solid var(--ink);
+      color: var(--ink);
+      padding: 0.4rem 1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: var(--ink); color: #fff; }
+
+    #error-msg {
+      display: none;
+      color: var(--accent);
+      font-size: 0.82rem;
+      margin-top: 0.8rem;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .holes {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      padding: 20px 0;
+      pointer-events: none;
+    }
+    .hole {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #d6e4f7;
+      border: 1px solid #c0d0e0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📝 AI Omluvenkář</h1>
+  <p class="subtitle">Excuse Generator &nbsp;·&nbsp; Powered by local LLM (Ollama) + PostgreSQL</p>
+
+  <div class="notebook">
+    <div class="holes">
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+    </div>
+
+    <div class="notebook-body">
+
+      <!-- Template picker -->
+      <div class="template-row">
+        <label for="template-select">📂 Template:</label>
+        <select id="template-select" onchange="applyTemplate()">
+          <option value="">— pick a starting template —</option>
+          <!-- Filled dynamically from /templates -->
+        </select>
+        <span class="select-arrow">▾</span>
+      </div>
+
+      <!-- Excuse textarea -->
+      <label for="excuse-input">✏️ Your casual excuse:</label>
+      <textarea
+        id="excuse-input"
+        placeholder="e.g. I overslept because I was gaming all night..."
+        rows="4"
+      ></textarea>
+
+      <button class="btn" id="generate-btn" onclick="generateLetter()">
+        <span class="spinner" id="spinner"></span>
+        <span id="btn-text">✉ Generate Formal Letter</span>
+      </button>
+
+      <p id="error-msg"></p>
+
+      <div id="output-section">
+        <p class="output-label">Your formal excuse letter:</p>
+        <div id="letter-output"></div>
+        <div class="stamp">✓ AI Approved</div>
+        <br/>
+        <button class="copy-btn" onclick="copyLetter()">⎘ Copy letter</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ── Load templates from the database on page load ──────────────────────
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/templates');
+        const templates = await res.json();
+        const select = document.getElementById('template-select');
+
+        templates.forEach(t => {
+          const option = document.createElement('option');
+          option.value = t.text;       // the actual excuse text
+          option.textContent = t.name; // the label shown in dropdown
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.warn('Could not load templates:', err);
+      }
+    }
+
+    // ── When a template is chosen, pre-fill the textarea ──────────────────
+    function applyTemplate() {
+      const select = document.getElementById('template-select');
+      const textarea = document.getElementById('excuse-input');
+      if (select.value) {
+        textarea.value = select.value;
+        textarea.focus();
+        // Move cursor to end so user can keep typing
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      }
+    }
+
+    // ── Generate the formal letter ─────────────────────────────────────────
+    async function generateLetter() {
+      const excuse = document.getElementById('excuse-input').value.trim();
+      if (!excuse) { showError('Please write your excuse first!'); return; }
+
+      setLoading(true);
+      hideError();
+      document.getElementById('output-section').style.display = 'none';
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ excuse }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) { showError('Error: ' + (data.error || 'Something went wrong.')); return; }
+
+        document.getElementById('letter-output').textContent = data.letter;
+        document.getElementById('output-section').style.display = 'block';
+      } catch (err) {
+        showError('Network error — is the Flask server running?');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function setLoading(on) {
+      document.getElementById('generate-btn').disabled = on;
+      document.getElementById('spinner').style.display = on ? 'block' : 'none';
+      document.getElementById('btn-text').textContent = on ? 'Generating...' : '✉ Generate Formal Letter';
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.style.display = 'block';
+    }
+    function hideError() { document.getElementById('error-msg').style.display = 'none'; }
+
+    function copyLetter() {
+      const text = document.getElementById('letter-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = '⎘ Copy letter', 2000);
+      });
+    }
+
+    document.getElementById('excuse-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.ctrlKey) generateLetter();
+    });
+
+    // Kick it off
+    loadTemplates();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+
+  # ── 1. PostgreSQL – the database ────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine         # Small, official Postgres image
+    container_name: excuse_db
+    environment:
+      POSTGRES_DB:       excuses      # Database name
+      POSTGRES_USER:     student      # Username
+      POSTGRES_PASSWORD: tajneheslo   # Password ("secret password" in Czech 😄)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # Persist data between restarts
+    networks:
+      - excuse_net
+    restart: unless-stopped
+    # Health check: wait until Postgres is actually ready to accept connections
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U student -d excuses"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ── 3. Flask web app – the AI Omluvenkář ────────────────────────────────────
+  web:
+    build: .
+    container_name: excuse_web
+    ports:
+      - "5005:5005"
+    env_file:
+      - .env
+    environment:
+      # PostgreSQL connection details (must match the "db" service above)
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=excuses
+      - DB_USER=student
+      - DB_PASS=tajneheslo
+    depends_on:
+      db:
+        condition: service_healthy   # Wait for Postgres health check to pass
+    networks:
+      - excuse_net
+    restart: unless-stopped
+
+# ── Shared network ───────────────────────────────────────────────────────────
+networks:
+  excuse_net:
+    driver: bridge
+
+volumes:
+  postgres_data:

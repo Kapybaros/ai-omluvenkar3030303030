@@ -18,11 +18,11 @@ DB_NAME = os.environ.get("DB_NAME", "excuses")
 DB_USER = os.environ.get("DB_USER", "student")
 DB_PASS = os.environ.get("DB_PASS", "tajneheslo")
 
-SYSTEM_PROMPT = """You are a formal school secretary who writes polite, professional excuse letters.
-When given a casual student excuse, rewrite it into a formal letter addressed to a teacher.
-The letter should be respectful, brief (3-4 sentences), and written in third person.
-Start with 'Dear Teacher,' and end with 'Yours sincerely, Parent/Guardian.'
-Do not add any extra commentary — only output the letter itself."""
+SYSTEM_PROMPT = """Jsi formální asistent, který píše slušné a profesionální omluvenky do školy.
+Když dostaneš neformální důvod absence od studenta, přepiš ho do formální omluvenky adresované třídnímu učiteli.
+Omluvenka by měla být uctivá, stručná (2-3 věty) a psaná jménem rodiče.
+Začni oslovením 'Vážený pane učiteli / Vážená paní učitelko,' a zakonči 'S pozdravem, [Podpis rodiče]'.
+Vždy odpovídej v češtině. Nepřidávej žádný zbytečný text navíc — vypiš pouze samotnou omluvenku."""
 
 
 def get_db():
@@ -121,7 +121,7 @@ def generate():
     if not casual_excuse:
         return jsonify({"error": "No excuse provided."}), 400
 
-    prompt = f"Student's casual excuse: \"{casual_excuse}\"\n\nPlease write the formal excuse letter:"
+    prompt = f"Studentův neformální důvod: \"{casual_excuse}\"\n\nNapiš prosím formální omluvenku:"
 
     try:
         headers = {
